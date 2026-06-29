@@ -1,0 +1,10 @@
+{
+  "seogpt": {
+    "Endpoint": "https://ai.seovendor.co/api/seogpt/",
+    "Definitions": "https://ai.seovendor.co/api/seogpt/definitions"
+  },
+  "better-keywords": {
+    "Endpoint": "https://ai.seovendor.co/api/better-keywords/",
+    "Definitions": "https://ai.seovendor.co/api/better-keywords/definitions"
+  }
+}

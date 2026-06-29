@@ -1,0 +1,21 @@
+{
+  "actions": ["generate"],
+  "parameters": {
+    "kw": {"required": true, "type": "string"},
+    "contenttype": {
+      "required": true,
+      "options": [
+        {"id": 14, "label": "Meta Title", "slug": "meta-title", "aliases": ["title tag", "seo title"]},
+        {"id": 15, "label": "Meta Description", "slug": "meta-description", "aliases": ["meta desc", "seo description"]},
+        {"id": 32, "label": "Product Description", "slug": "product-description"},
+        {"id": 40, "label": "Service Description", "slug": "service-description"}
+      ]
+    },
+    "language": {
+      "options": [
+        {"id": 1, "label": "English", "slug": "english", "aliases": ["en"]},
+        {"id": 2, "label": "Spanish", "slug": "spanish", "aliases": ["es"]}
+      ]
+    }
+  }
+}
