@@ -1,6 +1,6 @@
 # SV CLI
 
-SV CLI is an open-source command-line client for the SV AI API. It is designed as a definition-driven resolver layer: humans can use friendly commands, slugs, aliases, and presets, while scripts and AI agents can use strict enum IDs and raw JSON calls.
+SV CLI is an open-source command-line client for agentic SEO and GEO workflows using the SV API (SEO VENDOR API). It is designed as a definition-driven resolver layer: humans can use friendly commands, slugs, aliases, and presets, while scripts and AI agents can use strict enum IDs and raw JSON calls.
 
 The CLI discovers available tools from the API root and fetches each tool's definitions endpoint at runtime. Definitions are cached locally for speed, refreshed automatically after 24 hours by default, and can be refreshed or cleared manually.
 
