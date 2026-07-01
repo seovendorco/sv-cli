@@ -136,7 +136,10 @@ def extract_option_sets(definition: Any) -> dict[str, list[Candidate]]:
             field_name = first_present(node, PARAM_NAME_KEYS)
             description = first_present(node, ("description", "Description", "help", "Help"))
             if isinstance(field_name, str):
-                described_candidates = candidates_from_valid_values(field_name, description)
+                if isinstance(description, list):
+                    described_candidates = candidates_from_labeled_list(field_name, description)
+                else:
+                    described_candidates = candidates_from_valid_values(field_name, description)
                 if described_candidates:
                     add(field_name, described_candidates)
             for value in node.values():
@@ -165,7 +168,8 @@ def extract_parameter_names(definition: Any) -> set[str]:
             for item in node:
                 visit(item, parent_key)
 
-    visit(definition)
+    target = definition.get("api_input", definition) if isinstance(definition, dict) else definition
+    visit(target)
     return {name for name in names if name}
 
 
@@ -268,6 +272,20 @@ def candidates_from_valid_values(field: str, description: Any) -> list[Candidate
             continue
         candidates.append(Candidate(field=field, id=value, label=value, slug=slugify(value), raw=value))
     return candidates
+
+
+def candidates_from_labeled_list(field: str, items: list[Any]) -> list[Candidate]:
+    """Parse ``"id: label"`` strings from an api_input description list."""
+    candidates: list[Candidate] = []
+    for item in items:
+        if not isinstance(item, str):
+            continue
+        m = re.match(r"^(\S+)\s*:\s*(.+)$", item.strip())
+        if not m:
+            continue
+        id_str, label = m.group(1).strip(), m.group(2).strip()
+        candidates.append(Candidate(field=field, id=coerce_id(id_str), label=label, slug=slugify(label), raw=item))
+    return candidates if len(candidates) >= 2 else []
 
 
 def description_to_text(description: Any) -> str:

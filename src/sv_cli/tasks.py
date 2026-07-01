@@ -92,11 +92,11 @@ def has_result(data: Any) -> bool:
 
 
 def status_payload(task_id: str) -> dict[str, Any]:
-    return {"action": "status", "task_id": task_id}
+    return {"action": "getTaskStatus", "task_id": task_id}
 
 
 def result_payload(task_id: str) -> dict[str, Any]:
-    return {"action": "result", "task_id": task_id}
+    return {"action": "getResult", "task_id": task_id}
 
 
 def wait_for_task(

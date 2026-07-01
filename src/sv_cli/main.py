@@ -878,7 +878,7 @@ def preset_title(
     output: Optional[str] = typer.Option(None, "--output"),
 ) -> None:
     params = {
-        "type": "title-tag",
+        "type": "page-title",
         "keyword": keyword,
         "url": url,
         "brand": brand,

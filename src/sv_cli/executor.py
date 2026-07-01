@@ -106,7 +106,8 @@ def build_payload(
 
 
 def normalize_action(action: str) -> str:
-    return action.replace("-", "_")
+    parts = action.split("-")
+    return parts[0] + "".join(p.capitalize() for p in parts[1:])
 
 
 def execute_tool(

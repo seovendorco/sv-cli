@@ -78,10 +78,15 @@ def print_pretty(console: Console, data: Any) -> None:
 
 
 def extract_primary_text(data: dict[str, Any]) -> str | None:
-    for key in ("text", "content", "result", "output", "answer", "message", "data"):
+    for key in ("text", "content", "result", "output", "answer", "message"):
         value = data.get(key)
         if isinstance(value, str):
             return value
+    nested = data.get("data")
+    if isinstance(nested, str):
+        return nested
+    if isinstance(nested, dict):
+        return extract_primary_text(nested)
     return None
 
 
@@ -98,8 +103,10 @@ def find_tabular_data(data: Any) -> list[dict[str, Any]] | None:
 
 def to_csv(data: Any) -> str:
     rows = find_tabular_data(data)
-    if not rows:
+    if rows is None:
         raise UnsupportedFeatureError("CSV output requires a list of records in the API response.")
+    if not rows:
+        return ""
     fieldnames: list[str] = []
     for row in rows:
         for key in row:
@@ -160,8 +167,10 @@ def to_text(data: Any) -> str:
 
 def to_table_text(data: Any) -> str:
     rows = find_tabular_data(data)
-    if not rows:
+    if rows is None:
         raise UnsupportedFeatureError("Table output requires a list of records in the API response.")
+    if not rows:
+        return "(no results)"
     # Plain text table for file output and non-rich paths.
     fieldnames: list[str] = []
     for row in rows:
