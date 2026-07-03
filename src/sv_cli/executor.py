@@ -9,15 +9,15 @@ from typing import Any
 
 from rich.console import Console
 
-from .api_client import APIClient
 from .adapters import get_adapter
+from .api_client import APIClient
 from .config import resolve_api_key
 from .definitions import DefinitionsManager
 from .errors import ConfigError, InvalidInputError
 from .formatter import print_output
 from .resolver import extract_option_sets, resolve_api_field, resolve_enum_value
 from .tasks import extract_task_id, save_task, wait_for_task
-from .utils import coerce_mapping_values, maybe_read_file_value, mask_mapping
+from .utils import coerce_mapping_values, mask_mapping, maybe_read_file_value
 
 
 @dataclass

@@ -6,8 +6,9 @@ import json
 import os
 import re
 import sys
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 _SECRET_KEYS = {"k", "key", "api_key", "apikey", "apiKey", "token", "authorization", "Authorization"}
 

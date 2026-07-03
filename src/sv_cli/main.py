@@ -5,7 +5,7 @@ from __future__ import annotations
 import copy
 import getpass
 import sys
-from typing import Any, Optional
+from typing import Any
 
 import typer
 from rich.console import Console
@@ -56,11 +56,11 @@ def version_callback(value: bool) -> None:
 def main_callback(
     ctx: typer.Context,
     version: bool = typer.Option(False, "--version", callback=version_callback, is_eager=True, help="Show version and exit."),
-    profile: Optional[str] = typer.Option(None, "--profile", help="Configuration profile to use."),
-    api_key: Optional[str] = typer.Option(None, "--api-key", help="SV API key. Prefer SV_API_KEY or auth set."),
-    base_url: Optional[str] = typer.Option(None, "--base-url", help="Override API base URL."),
-    output_format: Optional[str] = typer.Option(None, "--format", help="pretty|json|table|csv|markdown|text"),
-    output: Optional[str] = typer.Option(None, "--output", help="Write output to a file."),
+    profile: str | None = typer.Option(None, "--profile", help="Configuration profile to use."),
+    api_key: str | None = typer.Option(None, "--api-key", help="SV API key. Prefer SV_API_KEY or auth set."),
+    base_url: str | None = typer.Option(None, "--base-url", help="Override API base URL."),
+    output_format: str | None = typer.Option(None, "--format", help="pretty|json|table|csv|markdown|text"),
+    output: str | None = typer.Option(None, "--output", help="Write output to a file."),
     quiet: bool = typer.Option(False, "--quiet", help="Suppress normal output."),
     verbose: bool = typer.Option(False, "--verbose", help="Show additional progress details."),
     debug: bool = typer.Option(False, "--debug", help="Show masked payloads, endpoints, and HTTP timing."),
@@ -181,8 +181,8 @@ def auth_set_impl(ctx: typer.Context, api_key: str | None, profile: str | None) 
 @auth_app.command("set")
 def auth_set(
     ctx: typer.Context,
-    api_key: Optional[str] = typer.Option(None, "--api-key", help="API key to store. Omit to enter securely."),
-    profile: Optional[str] = typer.Option(None, "--profile", help="Profile to update."),
+    api_key: str | None = typer.Option(None, "--api-key", help="API key to store. Omit to enter securely."),
+    profile: str | None = typer.Option(None, "--profile", help="Profile to update."),
 ) -> None:
     try:
         auth_set_impl(ctx, api_key, profile)
@@ -193,8 +193,8 @@ def auth_set(
 @auth_app.command("login")
 def auth_login(
     ctx: typer.Context,
-    api_key: Optional[str] = typer.Option(None, "--api-key", help="API key to store. Omit to enter securely."),
-    profile: Optional[str] = typer.Option(None, "--profile", help="Profile to update."),
+    api_key: str | None = typer.Option(None, "--api-key", help="API key to store. Omit to enter securely."),
+    profile: str | None = typer.Option(None, "--profile", help="Profile to update."),
 ) -> None:
     try:
         auth_set_impl(ctx, api_key, profile)
@@ -226,7 +226,7 @@ def auth_status(ctx: typer.Context) -> None:
 @auth_app.command("clear")
 def auth_clear(
     ctx: typer.Context,
-    profile: Optional[str] = typer.Option(None, "--profile", help="Profile to clear."),
+    profile: str | None = typer.Option(None, "--profile", help="Profile to clear."),
 ) -> None:
     try:
         runtime = runtime_from_ctx(ctx)
@@ -261,8 +261,8 @@ def profile_list() -> None:
 @profile_app.command("create")
 def profile_create(
     name: str = typer.Argument(..., help="Profile name."),
-    base_url: Optional[str] = typer.Option(None, "--base-url", help="Profile base URL."),
-    api_key: Optional[str] = typer.Option(None, "--api-key", help="Optional API key."),
+    base_url: str | None = typer.Option(None, "--base-url", help="Profile base URL."),
+    api_key: str | None = typer.Option(None, "--api-key", help="Optional API key."),
 ) -> None:
     try:
         create_profile(name, base_url=base_url, api_key=api_key)
@@ -310,7 +310,7 @@ def config_show(ctx: typer.Context) -> None:
 @config_app.command("get")
 def config_get(
     key: str = typer.Argument(..., help="Config key, e.g. base_url or cache_ttl_seconds."),
-    profile: Optional[str] = typer.Option(None, "--profile", help="Profile for profile-scoped keys."),
+    profile: str | None = typer.Option(None, "--profile", help="Profile for profile-scoped keys."),
 ) -> None:
     try:
         console.print(get_config_value(key, profile))
@@ -322,7 +322,7 @@ def config_get(
 def config_set(
     key: str = typer.Argument(...),
     value: str = typer.Argument(...),
-    profile: Optional[str] = typer.Option(None, "--profile", help="Profile for profile-scoped keys."),
+    profile: str | None = typer.Option(None, "--profile", help="Profile for profile-scoped keys."),
 ) -> None:
     try:
         set_config_value(key, coerce_jsonish(value), profile)
@@ -352,7 +352,7 @@ definitions_app = typer.Typer(help="Fetch, inspect, refresh, and clear API defin
 @definitions_app.command("refresh")
 def definitions_refresh(
     ctx: typer.Context,
-    tool: Optional[str] = typer.Option(None, "--tool", help="Refresh one tool only."),
+    tool: str | None = typer.Option(None, "--tool", help="Refresh one tool only."),
 ) -> None:
     try:
         runtime = runtime_from_ctx(ctx)
@@ -514,8 +514,8 @@ def options_command(ctx: typer.Context) -> None:
 def raw_call(
     ctx: typer.Context,
     tool: str = typer.Argument(..., help="Tool name or alias."),
-    json_payload: Optional[str] = typer.Option(None, "--json", help="Raw JSON object payload."),
-    file_path: Optional[str] = typer.Option(None, "--file", help="Read raw JSON object payload from file."),
+    json_payload: str | None = typer.Option(None, "--json", help="Raw JSON object payload."),
+    file_path: str | None = typer.Option(None, "--file", help="Read raw JSON object payload from file."),
     stdin_flag: bool = typer.Option(False, "--stdin", help="Read raw JSON object payload from stdin."),
     method: str = typer.Option("POST", "--method", help="HTTP method, usually POST."),
 ) -> None:
@@ -555,7 +555,7 @@ def task_call(ctx: typer.Context, task_id: str, action: str, tool: str | None) -
 def task_status(
     ctx: typer.Context,
     task_id: str = typer.Argument(...),
-    tool: Optional[str] = typer.Option(None, "--tool", help="Tool that created the task, if not in local task cache."),
+    tool: str | None = typer.Option(None, "--tool", help="Tool that created the task, if not in local task cache."),
 ) -> None:
     try:
         task_call(ctx, task_id, "status", tool)
@@ -567,7 +567,7 @@ def task_status(
 def task_result(
     ctx: typer.Context,
     task_id: str = typer.Argument(...),
-    tool: Optional[str] = typer.Option(None, "--tool", help="Tool that created the task, if not in local task cache."),
+    tool: str | None = typer.Option(None, "--tool", help="Tool that created the task, if not in local task cache."),
 ) -> None:
     try:
         task_call(ctx, task_id, "result", tool)
@@ -674,45 +674,45 @@ def build_params(
 def make_action_command(tool: str, action: str):
     def command(
         ctx: typer.Context,
-        keyword: Optional[str] = typer.Option(None, "--keyword", "--kw", help="Primary keyword."),
-        keywords: Optional[str] = typer.Option(None, "--keywords", help="Comma-separated keywords or path to a keyword file."),
-        url: Optional[str] = typer.Option(None, "--url", help="Target URL/domain."),
-        url_a: Optional[str] = typer.Option(None, "--url-a", "--url1", help="First URL for comparison or URL 1."),
-        url_b: Optional[str] = typer.Option(None, "--url-b", "--url2", help="Second URL for comparison or URL 2."),
-        brand: Optional[str] = typer.Option(None, "--brand", help="Brand or company name."),
-        type_value: Optional[str] = typer.Option(None, "--type", help="Type/content type/image type by ID, slug, label, or alias."),
-        language: Optional[str] = typer.Option(None, "--language", help="Language by ID, slug, label, or alias."),
-        engine: Optional[str] = typer.Option(None, "--engine", help="Engine/model by ID, slug, label, or alias."),
-        country: Optional[str] = typer.Option(None, "--country", help="Country/market code where supported."),
-        location: Optional[str] = typer.Option(None, "--location", help="Location/market where supported."),
-        text: Optional[str] = typer.Option(None, "--text", help="Text input for transformer-style tools."),
-        file_path: Optional[str] = typer.Option(None, "--file", help="Read text input from file."),
+        keyword: str | None = typer.Option(None, "--keyword", "--kw", help="Primary keyword."),
+        keywords: str | None = typer.Option(None, "--keywords", help="Comma-separated keywords or path to a keyword file."),
+        url: str | None = typer.Option(None, "--url", help="Target URL/domain."),
+        url_a: str | None = typer.Option(None, "--url-a", "--url1", help="First URL for comparison or URL 1."),
+        url_b: str | None = typer.Option(None, "--url-b", "--url2", help="Second URL for comparison or URL 2."),
+        brand: str | None = typer.Option(None, "--brand", help="Brand or company name."),
+        type_value: str | None = typer.Option(None, "--type", help="Type/content type/image type by ID, slug, label, or alias."),
+        language: str | None = typer.Option(None, "--language", help="Language by ID, slug, label, or alias."),
+        engine: str | None = typer.Option(None, "--engine", help="Engine/model by ID, slug, label, or alias."),
+        country: str | None = typer.Option(None, "--country", help="Country/market code where supported."),
+        location: str | None = typer.Option(None, "--location", help="Location/market where supported."),
+        text: str | None = typer.Option(None, "--text", help="Text input for transformer-style tools."),
+        file_path: str | None = typer.Option(None, "--file", help="Read text input from file."),
         stdin_flag: bool = typer.Option(False, "--stdin", help="Read text input from stdin."),
-        search: Optional[str] = typer.Option(None, "--search", "--searchterm", help="Search term for marketplace/service-style tools."),
-        query: Optional[str] = typer.Option(None, "--query", help="Query/search term where supported."),
-        price: Optional[str] = typer.Option(None, "--price", help="Price ceiling or price filter where supported."),
-        series: Optional[str] = typer.Option(None, "--series", help="Service series filter where supported."),
-        category: Optional[str] = typer.Option(None, "--category", help="Service category filter where supported."),
-        outline: Optional[str] = typer.Option(None, "--outline", help="Outline text or path to outline file."),
-        theme: Optional[str] = typer.Option(None, "--theme", help="Image theme by ID, slug, label, or alias."),
-        background: Optional[str] = typer.Option(None, "--background", help="Image background by ID, slug, label, or alias."),
-        color: Optional[str] = typer.Option(None, "--color", help="Image color/palette by ID, slug, label, or alias."),
-        size: Optional[str] = typer.Option(None, "--size", help="Image size by ID, slug, label, or alias."),
+        search: str | None = typer.Option(None, "--search", "--searchterm", help="Search term for marketplace/service-style tools."),
+        query: str | None = typer.Option(None, "--query", help="Query/search term where supported."),
+        price: str | None = typer.Option(None, "--price", help="Price ceiling or price filter where supported."),
+        series: str | None = typer.Option(None, "--series", help="Service series filter where supported."),
+        category: str | None = typer.Option(None, "--category", help="Service category filter where supported."),
+        outline: str | None = typer.Option(None, "--outline", help="Outline text or path to outline file."),
+        theme: str | None = typer.Option(None, "--theme", help="Image theme by ID, slug, label, or alias."),
+        background: str | None = typer.Option(None, "--background", help="Image background by ID, slug, label, or alias."),
+        color: str | None = typer.Option(None, "--color", help="Image color/palette by ID, slug, label, or alias."),
+        size: str | None = typer.Option(None, "--size", help="Image size by ID, slug, label, or alias."),
         wait: bool = typer.Option(False, "--wait", help="Wait for async task completion."),
         timeout: int = typer.Option(600, "--timeout", help="Task wait timeout in seconds."),
         poll_interval: int = typer.Option(5, "--poll-interval", help="Task poll interval in seconds."),
         no_progress: bool = typer.Option(False, "--no-progress", help="Disable progress display."),
-        output_format: Optional[str] = typer.Option(None, "--format", help="pretty|json|table|csv|markdown|text"),
-        output: Optional[str] = typer.Option(None, "--output", help="Write output to a file."),
+        output_format: str | None = typer.Option(None, "--format", help="pretty|json|table|csv|markdown|text"),
+        output: str | None = typer.Option(None, "--output", help="Write output to a file."),
         quiet: bool = typer.Option(False, "--quiet", help="Suppress normal output."),
         verbose: bool = typer.Option(False, "--verbose", help="Verbose output."),
         debug: bool = typer.Option(False, "--debug", help="Debug output with secrets masked."),
         strict: bool = typer.Option(False, "--strict", help="Strict enum matching."),
         no_fuzzy: bool = typer.Option(False, "--no-fuzzy", help="Disable fuzzy enum matching."),
         non_interactive: bool = typer.Option(False, "--non-interactive", help="Disable prompts."),
-        api_key: Optional[str] = typer.Option(None, "--api-key", help="API key override."),
-        base_url: Optional[str] = typer.Option(None, "--base-url", help="Base URL override."),
-        profile: Optional[str] = typer.Option(None, "--profile", help="Profile override."),
+        api_key: str | None = typer.Option(None, "--api-key", help="API key override."),
+        base_url: str | None = typer.Option(None, "--base-url", help="Base URL override."),
+        profile: str | None = typer.Option(None, "--profile", help="Profile override."),
     ) -> None:
         params = build_params(
             keyword=keyword,
@@ -764,9 +764,9 @@ def make_action_command(tool: str, action: str):
 def make_option_alias_command(tool: str, field_aliases: tuple[str, ...]):
     def command(
         ctx: typer.Context,
-        search: Optional[str] = typer.Option(None, "--search", help="Filter options."),
-        output_format: Optional[str] = typer.Option(None, "--format", help="Output format."),
-        output: Optional[str] = typer.Option(None, "--output", help="Write output to file."),
+        search: str | None = typer.Option(None, "--search", help="Filter options."),
+        output_format: str | None = typer.Option(None, "--format", help="Output format."),
+        output: str | None = typer.Option(None, "--output", help="Write output to file."),
     ) -> None:
         try:
             runtime = runtime_from_ctx(ctx)
@@ -816,8 +816,8 @@ def make_tool_app(adapter: ToolAdapter) -> typer.Typer:
     @tool_app.command("raw")
     def raw(
         ctx: typer.Context,
-        json_payload: Optional[str] = typer.Option(None, "--json", help="Raw JSON payload."),
-        file_path: Optional[str] = typer.Option(None, "--file", help="Read raw JSON from file."),
+        json_payload: str | None = typer.Option(None, "--json", help="Raw JSON payload."),
+        file_path: str | None = typer.Option(None, "--file", help="Read raw JSON from file."),
         stdin_flag: bool = typer.Option(False, "--stdin", help="Read raw JSON from stdin."),
         method: str = typer.Option("POST", "--method", help="HTTP method."),
     ) -> None:
@@ -860,9 +860,9 @@ for adapter in TOOL_ADAPTERS.values():
 def preset_meta(
     ctx: typer.Context,
     keyword: str = typer.Option(..., "--keyword", "--kw"),
-    url: Optional[str] = typer.Option(None, "--url"),
-    output_format: Optional[str] = typer.Option(None, "--format"),
-    output: Optional[str] = typer.Option(None, "--output"),
+    url: str | None = typer.Option(None, "--url"),
+    output_format: str | None = typer.Option(None, "--format"),
+    output: str | None = typer.Option(None, "--output"),
 ) -> None:
     params = {"type": "meta-description", "keyword": keyword, "url": url, "format": output_format, "output": output}
     run_tool_action(ctx, tool="seogpt", action="generate", params=params)
@@ -872,10 +872,10 @@ def preset_meta(
 def preset_title(
     ctx: typer.Context,
     keyword: str = typer.Option(..., "--keyword", "--kw"),
-    url: Optional[str] = typer.Option(None, "--url"),
-    brand: Optional[str] = typer.Option(None, "--brand"),
-    output_format: Optional[str] = typer.Option(None, "--format"),
-    output: Optional[str] = typer.Option(None, "--output"),
+    url: str | None = typer.Option(None, "--url"),
+    brand: str | None = typer.Option(None, "--brand"),
+    output_format: str | None = typer.Option(None, "--format"),
+    output: str | None = typer.Option(None, "--output"),
 ) -> None:
     params = {
         "type": "page-title",

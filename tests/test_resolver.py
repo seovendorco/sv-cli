@@ -5,12 +5,12 @@ from pathlib import Path
 
 import pytest
 
+from sv_cli.errors import AmbiguousMatchError, InvalidInputError
 from sv_cli.resolver import (
     extract_option_sets,
     resolve_api_field,
     resolve_enum_value,
 )
-from sv_cli.errors import AmbiguousMatchError, InvalidInputError
 
 FIXTURE = Path(__file__).parent / "fixtures" / "seogpt_definitions.json"
 
