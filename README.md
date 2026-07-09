@@ -1,3 +1,13 @@
+```
+███████╗██╗   ██╗     ██████╗██╗     ██╗
+██╔════╝██║   ██║    ██╔════╝██║     ██║
+███████╗██║   ██║    ██║     ██║     ██║
+╚════██║╚██╗ ██╔╝    ██║     ██║     ██║
+███████║ ╚████╔╝     ╚██████╗███████╗██║
+╚══════╝  ╚═══╝       ╚═════╝╚══════╝╚═╝
+
+Agentic SEO & GEO from the command line
+```
 # SV CLI
 
 SV CLI is an open-source command-line client for agentic SEO and GEO workflows using the SV API (SEO VENDOR API). It is designed as a definition-driven resolver layer: humans can use friendly commands, slugs, aliases, and presets, while scripts and AI agents can use strict enum IDs and raw JSON calls.
