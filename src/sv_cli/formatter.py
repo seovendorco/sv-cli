@@ -5,6 +5,7 @@ from __future__ import annotations
 import csv
 import io
 import json
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -48,7 +49,12 @@ def print_output(console: Console, data: Any, fmt: str = "pretty", output: str |
         path.write_text(rendered + ("" if rendered.endswith("\n") else "\n"), encoding="utf-8")
         return
     if rendered is not None:
-        console.print(rendered)
+        if fmt == "json":
+            # Bypass Rich — it word-wraps long lines, inserting literal newlines
+            # inside JSON string values and producing unparseable output.
+            sys.stdout.write(rendered + "\n")
+        else:
+            console.print(rendered)
         return
     print_pretty(console, mask_mapping(data))
 
