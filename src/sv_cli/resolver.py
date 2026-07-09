@@ -371,6 +371,11 @@ def resolve_enum_value(
 
     if value is None:
         return None
+    if isinstance(value, (list, tuple)):
+        return [
+            resolve_enum_value(field, item, candidates, strict=strict, fuzzy=fuzzy, non_interactive=non_interactive)
+            for item in value
+        ]
     text = str(value).strip()
     if not text:
         raise InvalidInputError(f'Could not resolve --{field}: empty value.')

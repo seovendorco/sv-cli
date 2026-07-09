@@ -86,8 +86,12 @@ def extract_status(data: Any) -> str | None:
 
 
 def has_result(data: Any) -> bool:
+    # "data" is deliberately excluded: it's SV API's universal response envelope key,
+    # present on every response including in-progress status checks, so treating it as
+    # a completion signal made poll_once() below declare victory on the very first poll
+    # regardless of actual task status.
     if isinstance(data, dict):
-        return any(key in data for key in ("result", "results", "data", "output", "content"))
+        return any(key in data for key in ("result", "results", "output", "content"))
     return data is not None
 
 

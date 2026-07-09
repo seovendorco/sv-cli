@@ -59,7 +59,7 @@ TOOL_ADAPTERS: dict[str, ToolAdapter] = {
         command="better-keywords",
         aliases=("keywords",),
         default_action="research",
-        actions=("research", "raw"),
+        actions=("research", "filter", "raw"),
         field_aliases=COMMON_FIELD_ALIASES,
         option_aliases={
             "types": ("researchtype", "research_type", "type", "types"),
