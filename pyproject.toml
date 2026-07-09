@@ -44,8 +44,8 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/seovendor/sv-cli"
-Issues = "https://github.com/seovendor/sv-cli/issues"
+Homepage = "https://github.com/seovendorco/sv-cli"
+Issues = "https://github.com/seovendorco/sv-cli/issues"
 
 [project.scripts]
 sv = "sv_cli.main:app"
