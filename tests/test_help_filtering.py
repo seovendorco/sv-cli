@@ -10,11 +10,14 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
 
 FIXTURES = Path(__file__).parent / "fixtures"
+
+_ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")
 
 
 def _run_cli(sv_home: Path, *args: str) -> str:
@@ -34,6 +37,7 @@ def _run_cli(sv_home: Path, *args: str) -> str:
     (cache_dir / "definitions.json").write_text(json.dumps(cache))
     env = dict(os.environ)
     env["SV_HOME"] = str(sv_home)
+    env["NO_COLOR"] = "1"
     result = subprocess.run(
         [sys.executable, "-m", "sv_cli.main", *args],
         env=env,
@@ -41,7 +45,7 @@ def _run_cli(sv_home: Path, *args: str) -> str:
         text=True,
         timeout=30,
     )
-    return result.stdout
+    return _ANSI_ESCAPE_RE.sub("", result.stdout)
 
 
 def test_seogpt2_create_task_hides_unrelated_generic_options(tmp_path):
