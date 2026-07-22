@@ -55,16 +55,16 @@ All 16 available tools. Use exact command names — aliases are human shortcuts.
 
 | Command | Alias | Default Action | API Required Fields | Async |
 |---|---|---|---|---|
-| `better-keywords` | `keywords` | `research` / `filter` | `--keyword` (`filter` also needs `--data`) | No |
+| `better-keywords` | `keywords` | `research` / `filter` | `--keyword` (`filter` needs a JSON `data` array — raw call only) | No |
 | `content-transformer` | `transform` | `rewrite` | `--text` | No |
 | `core-analysis` | `core` | `analyze` | *(none required)* | No |
 | `geo-audit` | `audit` | `create-task` | `--url` `--keyword` | Yes |
 | `insight-igniter` | `insights` | `entities` | `--url` | No |
 | `preliminary-audit` | `prelim-audit` | `analyze` | `--url` | No |
-| `ranklens` | — | `rank` | `--keyword` `--url` | No |
+| `ranklens` | — | `rank` | `--entity` `--url` | No |
 | `seo-image` | `image` | `generate` | `--keyword` | No |
 | `seogpt` | `seo-gpt` | `generate` | `--keyword` `--type` | No |
-| `seogpt2` | `seo-gpt2` | `create-task` | `--keyword` *(= Topic)* | Yes |
+| `seogpt2` | `seo-gpt2` | `create-task` | `--topic` *(`--keyword`/`--kw` is a separate, optional field)* | Yes |
 | `seogpt-compare` | `compare` | `create-task` | `--url` `--keyword` | Yes |
 | `seo-mapping` | `mapping` | `create-task` | `--url` `--keyword` | Yes |
 | `topical-authority` | `topical` | `topics` | `--keyword` | No |
@@ -112,6 +112,7 @@ sv options seogpt type --search meta
 # Shorthand subcommands (where available)
 sv seogpt types
 sv seogpt types --search meta
+sv seogpt lengths
 sv seogpt languages
 sv seogpt engines
 sv image types
@@ -128,6 +129,7 @@ sv seo-mapping types
 sv better-keywords types
 sv better-keywords languages
 sv content-transformer types
+sv content-transformer lengths
 sv content-transformer languages
 sv ranklens languages
 sv ranklens engines
@@ -241,8 +243,8 @@ sv --format json task result TASK_ID --tool geo-audit
 ### Pattern 3: Direct tool polling
 
 ```bash
-sv geo-audit get-task-status --task_id TASK_ID --format json
-sv geo-audit get-result --task_id TASK_ID --format json
+sv geo-audit get-task-status --task-id TASK_ID --format json
+sv geo-audit get-result --task-id TASK_ID --format json
 ```
 
 Same for `seogpt2`, `seogpt-compare`, `seo-mapping` — replace `geo-audit` with the tool name.
@@ -253,14 +255,17 @@ Same for `seogpt2`, `seogpt-compare`, `seo-mapping` — replace `geo-audit` with
 
 These differ from the standard pattern — get them wrong and the call fails.
 
-### seogpt2 — `--keyword` maps to `Topic`, not `kw`
+### seogpt2 — `--topic` maps to `Topic` (required), `--keyword`/`--kw` is a separate field
 
 ```bash
-# CORRECT — --keyword sends value as "Topic" API field
-sv seogpt2 create-task --keyword "White Label SEO for Agencies" --type on-page-blog-article --wait --strict --no-fuzzy --non-interactive --format json
+# CORRECT — --topic sends value as the required "Topic" API field
+sv seogpt2 create-task --topic "White Label SEO for Agencies" --type on-page-blog-article --wait --strict --no-fuzzy --non-interactive --format json
 
-# WRONG — no other flag maps to Topic
-sv seogpt2 create-task --text "..." ...   # also maps to Topic, use --keyword
+# --title is an alias for --topic (same field)
+sv seogpt2 create-task --title "White Label SEO for Agencies" --type on-page-blog-article --wait --strict --no-fuzzy --non-interactive --format json
+
+# --keyword/--kw maps to the separate, optional KW field — it does NOT set Topic
+sv seogpt2 create-task --topic "White Label SEO for Agencies" --keyword "white label seo" --type on-page-blog-article --wait --strict --no-fuzzy --non-interactive --format json
 ```
 
 ### better-keywords `filter` — requires `data` array from prior `research` call
@@ -288,11 +293,12 @@ No CLI flag exists for `mgptid`. Must use raw call:
 
 ```bash
 # Step 1 — get MGPTID from rank response
-sv ranklens rank --keyword "white label seo" --url https://example.com --format json
+sv ranklens rank --entity "white label seo" --url https://example.com --format json
 # → parse response["data"]["MGPTID"]
+# response["data"] always uses "entity", never "keyword" — --keyword/--kw still works as an input alias, but the response field name is always "entity"
 
 # Step 2 — pass MGPTID via raw call
-sv --format json call ranklens --json '{"action":"competitors","mgptid":"MGPTID_VALUE","web":"https://example.com","kw":"white label seo"}'
+sv --format json call ranklens --json '{"action":"competitors","mgptid":"MGPTID_VALUE","web":"https://example.com","entity":"white label seo"}'
 ```
 
 ### `sv task status/result` — `--format` must be global
@@ -313,7 +319,7 @@ sv task status TASK_ID --tool geo-audit --format json
 |---|---|---|
 | `Could not resolve --type "X" in strict mode` | Value is not a valid slug or ID | Run `sv options TOOL type` → use `id` or `slug` column |
 | `Could not resolve --type "X"` (no strict) | No match found at any level | Run `sv options TOOL type --search X` to find closest match |
-| `Topic is required` | seogpt2 called without `--keyword` | Add `--keyword "your topic"` |
+| `Topic is required` | seogpt2 called without `--topic` | Add `--topic "your topic"` |
 | `task_id is invalid` | Task has expired on the server | Create a new task |
 | `No local tool mapping found for task` | Task not in `~/.sv/tasks.json` | Add `--tool TOOL_NAME` explicitly |
 | `API authentication failed: HTTP 401` | Bad or missing API key | Check `SV_API_KEY` environment variable |
@@ -331,7 +337,7 @@ When friendly flags are insufficient, send the payload directly. The CLI injects
 ```bash
 sv --format json call seogpt --json '{"action":"generate","kw":"white label seo","type":18}'
 sv --format json call geo-audit --json '{"action":"createTask","kw":"white label seo","URL":"https://example.com"}'
-sv --format json call ranklens --json '{"action":"competitors","mgptid":"...","web":"https://example.com","kw":"white label seo"}'
+sv --format json call ranklens --json '{"action":"competitors","mgptid":"...","web":"https://example.com","entity":"white label seo"}'
 ```
 
 From a file:
@@ -370,12 +376,12 @@ sv --format json call better-keywords --json '{"action":"filter","kw":"white lab
 sv content-transformer rewrite --text "SEO services for agencies" --keyword "white label seo" --strict --no-fuzzy --non-interactive --format json
 sv core-analysis analyze --url https://example.com --keyword "white label seo" --strict --no-fuzzy --non-interactive --format json
 sv geo-audit create-task --url https://example.com --keyword "white label seo" --wait --strict --no-fuzzy --non-interactive --format json
-sv insight-igniter entities --url https://example.com --keyword "white label seo" --strict --no-fuzzy --non-interactive --format json
+sv insight-igniter entities --url https://example.com --strict --no-fuzzy --non-interactive --format json
 sv preliminary-audit analyze --url https://example.com --strict --no-fuzzy --non-interactive --format json
-sv ranklens rank --keyword "white label seo" --url https://example.com --strict --no-fuzzy --non-interactive --format json
+sv ranklens rank --entity "white label seo" --url https://example.com --strict --no-fuzzy --non-interactive --format json
 sv seo-image generate --keyword "white label seo" --type 33 --strict --no-fuzzy --non-interactive --format json
 sv seogpt generate --keyword "white label seo" --type 18 --strict --no-fuzzy --non-interactive --format json
-sv seogpt2 create-task --keyword "White Label SEO for Agencies" --type 0 --wait --strict --no-fuzzy --non-interactive --format json
+sv seogpt2 create-task --topic "White Label SEO for Agencies" --type 0 --wait --strict --no-fuzzy --non-interactive --format json
 sv seogpt-compare create-task --url https://example.com --keyword "white label seo" --wait --strict --no-fuzzy --non-interactive --format json
 sv seo-mapping create-task --url https://example.com --keyword "white label seo" --wait --strict --no-fuzzy --non-interactive --format json
 sv topical-authority topics --keyword "white label seo" --strict --no-fuzzy --non-interactive --format json
