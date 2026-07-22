@@ -140,7 +140,7 @@ The canonical API tool keys are discovered from the live API root; local aliases
 
 ## Enum resolution
 
-For enum-heavy fields such as content type, language, engine, image type, theme, background, color, and size, the CLI resolves values in this order:
+For enum-heavy fields such as content type, content length, language, engine, image type, theme, background, color, and size, the CLI resolves values in this order:
 
 1. Numeric ID exact match
 2. Exact slug match
@@ -159,6 +159,12 @@ Examples that all resolve to Meta Description (id 18):
 --type meta-description
 --type "Meta Description"
 --type "meta desc"
+```
+
+`--length`/`--contentlength` (content length by ID, slug, or label — run `sv TOOL lengths` for valid values) resolves the same way:
+
+```bash
+sv seogpt generate --keyword "white label seo" --type 18 --length 300
 ```
 
 > **Note:** Fuzzy matching is enabled by default. Use `--strict --no-fuzzy` in scripts to require exact ID or slug and avoid unintended matches.
@@ -211,10 +217,10 @@ sv task status TASK_ID --tool geo-audit
 sv task result TASK_ID --tool geo-audit
 ```
 
-`seogpt2` is another async tool. Its required field is `Topic` (a title or subject), mapped via `--keyword`:
+`seogpt2` is another async tool. Its required field is `Topic` (a title or subject), mapped via `--topic` (`--title` is an alias for the same field). `--keyword`/`--kw` is a separate, optional field for additional keywords — it does not set the topic:
 
 ```bash
-sv seogpt2 create-task --keyword "White Label SEO for Agencies" --type on-page-blog-article --wait
+sv seogpt2 create-task --topic "White Label SEO for Agencies" --type on-page-blog-article --wait
 ```
 
 See available types with `sv seogpt2 types`, lengths with `sv seogpt2 lengths`, engines with `sv seogpt2 engines`.
@@ -223,8 +229,8 @@ Manual 3-step flow (without `--wait`):
 
 ```bash
 sv geo-audit create-task --url https://example.com --keyword "seo agency,white label seo"
-sv geo-audit get-task-status --task_id TASK_ID
-sv geo-audit get-result --task_id TASK_ID
+sv geo-audit get-task-status --task-id TASK_ID
+sv geo-audit get-result --task-id TASK_ID
 ```
 
 > **Note:** `--format` is not available on `sv task status` or `sv task result` directly. Place it before `task` as a global flag:
