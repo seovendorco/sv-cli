@@ -35,7 +35,7 @@ class APIClient:
         payload: dict[str, Any],
         api_key: str | None,
         method: str = "POST",
-        timeout: float = 60.0,
+        timeout: float = 300.0,
     ) -> APIResponse:
         final_payload = dict(payload)
         if api_key and not any(key in final_payload for key in ("k", "api_key", "apikey", "key")):

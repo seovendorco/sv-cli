@@ -333,6 +333,40 @@ def normalize_field(field: str) -> str:
     return str(field).strip().replace("-", "_").replace(" ", "_").lower()
 
 
+def real_field_names(definition: Any) -> set[str]:
+    """Normalized API field names that genuinely appear in a tool's live api_input.
+
+    Used to decide which generic CLI options are relevant to a specific tool,
+    so --help doesn't advertise flags the tool's real API doesn't accept.
+    """
+
+    names: set[str] = set()
+    items = definition.get("api_input") if isinstance(definition, dict) else None
+    if not isinstance(items, list):
+        return names
+    for item in items:
+        if isinstance(item, dict):
+            field = item.get("field")
+            if isinstance(field, str):
+                names.add(normalize_field(field))
+    return names
+
+
+def is_cli_field_relevant(tool: str, cli_field: str, definition: Any) -> bool:
+    """True when a generic CLI field resolves to a real field on this tool's live definition.
+
+    When no live definition is cached yet (e.g. before the first `sv definitions
+    refresh`, or offline), returns True for everything - never hide options based
+    on missing data.
+    """
+
+    if not definition:
+        return True
+    api_field, _candidates = resolve_api_field(tool, cli_field, definition)
+    target_fields = real_field_names(definition) | set(extract_option_sets(definition))
+    return api_field in target_fields
+
+
 def resolve_api_field(tool: str, cli_field: str, definition: Any) -> tuple[str, list[Candidate] | None]:
     """Choose the best API field name for a friendly CLI field."""
 

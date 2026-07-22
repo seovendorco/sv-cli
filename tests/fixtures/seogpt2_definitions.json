@@ -1,0 +1,15 @@
+{
+  "api_input": [
+    {"field": "action", "type": "string", "required": "no", "description": ["create-task: Create task.", "get-task-status: Get status.", "get-result: Get result."]},
+    {"field": "Topic", "type": "string", "required": "yes", "description": "Topic or title, 12 to 200 characters."},
+    {"field": "KW", "type": "string", "required": "no", "description": "Keyword text, up to 5 keywords each 4 to 70 characters, 300 characters max."},
+    {"field": "URL", "type": "string", "required": "no", "description": "Target URL."},
+    {"field": "Brand", "type": "string", "required": "no", "description": "Brand name."},
+    {"field": "ContentType", "type": "integer", "required": "no", "description": null},
+    {"field": "ContentLength", "type": "integer", "required": "no", "description": ["0: 500", "1: 1000", "2: 1200"]},
+    {"field": "Language", "type": "integer", "required": "no", "description": null},
+    {"field": "task_id", "type": "string", "required": "no", "description": "Encrypted task ID from createTask response."},
+    {"field": "k", "type": "string", "required": "yes", "description": "API key."}
+  ],
+  "api_output": []
+}

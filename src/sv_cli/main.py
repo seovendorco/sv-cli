@@ -31,13 +31,85 @@ from .definitions import DefinitionsManager
 from .errors import CLIError, ConfigError, InvalidInputError
 from .executor import RuntimeOptions, WaitOptions, execute_tool, load_json_payload
 from .formatter import print_output
-from .resolver import extract_option_sets, resolve_api_field, search_candidates
+from .resolver import extract_option_sets, is_cli_field_relevant, resolve_api_field, search_candidates
 from .tasks import get_task_tool, result_payload, status_payload
 from .utils import coerce_jsonish, coerce_mapping_values, parse_key_value_args, read_text_source
 
 console = Console()
 err_console = Console(stderr=True)
 COMMON_CONTEXT_SETTINGS = {"allow_extra_args": True, "ignore_unknown_options": True}
+
+# ---------------------------------------------------------------------------
+# Per-tool/per-action option visibility for --help.
+#
+# The generic option palette in make_action_command() below is shared by every
+# tool+action, but most of its ~25 flags are irrelevant to any given one (e.g.
+# --price/--theme/--color have nothing to do with seogpt2). This section hides
+# irrelevant flags from --help using the live, cached API definitions - the
+# same live_definition-driven approach sv_mcp's schemas.py already uses.
+#
+# --help must stay instant and work offline, so this reads the on-disk
+# definitions cache directly (DefinitionsManager.load_cache()) and never
+# triggers a network fetch. Before the cache is populated (fresh install, or
+# offline), every option stays visible - identical to the old fully-generic
+# behavior - until the user runs a command or `sv definitions refresh`.
+# ---------------------------------------------------------------------------
+
+_DEFINITIONS_CACHE: dict[str, Any] | None = None
+
+
+def _cached_definitions_cache() -> dict[str, Any]:
+    global _DEFINITIONS_CACHE
+    if _DEFINITIONS_CACHE is None:
+        try:
+            _DEFINITIONS_CACHE = DefinitionsManager().load_cache()
+        except Exception:  # noqa: BLE001 - --help must never fail over a cache read
+            _DEFINITIONS_CACHE = {}
+    return _DEFINITIONS_CACHE
+
+
+def _tool_definition(tool: str) -> dict[str, Any]:
+    cache = _cached_definitions_cache()
+    entry = cache.get("tools", {}).get(tool) or {}
+    return entry.get("definition") or {}
+
+
+# create-task/get-task-status/get-result is the identical lifecycle used by every
+# async tool (geogptaudit, seogpt2, seogptcompare, seogptmapping) - confirmed from
+# each tool's index.php, not guessed. The status/result actions only ever need a
+# task_id, regardless of what the create-task action itself accepts.
+TASK_LOOKUP_ACTIONS = {"get-task-status", "get-result"}
+
+# Friendly CLI field names in make_action_command()'s signature, in the order they're
+# declared there. Keep in sync with that function's parameters.
+GENERIC_CLI_FIELDS = (
+    "keyword", "keywords", "topic", "entity", "url", "url_a", "url_b", "brand", "type_value",
+    "length", "language", "engine", "country", "location", "text", "search", "query", "price",
+    "series", "category", "outline", "theme", "background", "color", "size",
+)
+
+# Maps a few typer parameter names to the field_aliases key they're actually resolved
+# under (adapters.py), for the ones where they differ (e.g. "type_value" avoids
+# shadowing the builtin `type`, but resolves as "type").
+_CLI_FIELD_ALIAS_FOR = {"type_value": "type"}
+
+
+def _visible_cli_fields(tool: str, action: str) -> set[str] | None:
+    """Friendly CLI field names relevant to this tool+action, or None for "show all".
+
+    None is the safe fallback: no live definition cached yet, so nothing is hidden.
+    """
+
+    if action in TASK_LOOKUP_ACTIONS:
+        return set()  # every generic content field is irrelevant; task_id is separate
+    definition = _tool_definition(tool)
+    if not definition:
+        return None
+    return {
+        field
+        for field in GENERIC_CLI_FIELDS
+        if is_cli_field_relevant(tool, _CLI_FIELD_ALIAS_FOR.get(field, field), definition)
+    }
 
 app = typer.Typer(
     name="sv",
@@ -585,11 +657,15 @@ def build_params(
     *,
     keyword: str | None,
     keywords: str | None,
+    topic: str | None,
+    entity: str | None,
+    task_id: str | None,
     url: str | None,
     url_a: str | None,
     url_b: str | None,
     brand: str | None,
     type_value: str | None,
+    length: str | None,
     language: str | None,
     engine: str | None,
     country: str | None,
@@ -626,11 +702,15 @@ def build_params(
     params: dict[str, Any] = {
         "keyword": keyword,
         "keywords": keywords,
+        "topic": topic,
+        "entity": entity,
+        "task_id": task_id,
         "url": url,
         "url_a": url_a,
         "url_b": url_b,
         "brand": brand,
         "type": type_value,
+        "length": length,
         "language": language,
         "engine": engine,
         "country": country,
@@ -672,32 +752,89 @@ def build_params(
 
 
 def make_action_command(tool: str, action: str):
+    visible = _visible_cli_fields(tool, action)
+
+    def hidden(field: str) -> bool:
+        return visible is not None and field not in visible
+
+    show_task_id = action in TASK_LOOKUP_ACTIONS
+
     def command(
         ctx: typer.Context,
-        keyword: str | None = typer.Option(None, "--keyword", "--kw", help="Primary keyword."),
-        keywords: str | None = typer.Option(None, "--keywords", help="Comma-separated keywords or path to a keyword file."),
-        url: str | None = typer.Option(None, "--url", help="Target URL/domain."),
-        url_a: str | None = typer.Option(None, "--url-a", "--url1", help="First URL for comparison or URL 1."),
-        url_b: str | None = typer.Option(None, "--url-b", "--url2", help="Second URL for comparison or URL 2."),
-        brand: str | None = typer.Option(None, "--brand", help="Brand or company name."),
-        type_value: str | None = typer.Option(None, "--type", help="Type/content type/image type by ID, slug, label, or alias."),
-        language: str | None = typer.Option(None, "--language", help="Language by ID, slug, label, or alias."),
-        engine: str | None = typer.Option(None, "--engine", help="Engine/model by ID, slug, label, or alias."),
-        country: str | None = typer.Option(None, "--country", help="Country/market code where supported."),
-        location: str | None = typer.Option(None, "--location", help="Location/market where supported."),
-        text: str | None = typer.Option(None, "--text", help="Text input for transformer-style tools."),
-        file_path: str | None = typer.Option(None, "--file", help="Read text input from file."),
-        stdin_flag: bool = typer.Option(False, "--stdin", help="Read text input from stdin."),
-        search: str | None = typer.Option(None, "--search", "--searchterm", help="Search term for marketplace/service-style tools."),
-        query: str | None = typer.Option(None, "--query", help="Query/search term where supported."),
-        price: str | None = typer.Option(None, "--price", help="Price ceiling or price filter where supported."),
-        series: str | None = typer.Option(None, "--series", help="Service series filter where supported."),
-        category: str | None = typer.Option(None, "--category", help="Service category filter where supported."),
-        outline: str | None = typer.Option(None, "--outline", help="Outline text or path to outline file."),
-        theme: str | None = typer.Option(None, "--theme", help="Image theme by ID, slug, label, or alias."),
-        background: str | None = typer.Option(None, "--background", help="Image background by ID, slug, label, or alias."),
-        color: str | None = typer.Option(None, "--color", help="Image color/palette by ID, slug, label, or alias."),
-        size: str | None = typer.Option(None, "--size", help="Image size by ID, slug, label, or alias."),
+        topic: str | None = typer.Option(None, "--topic", "--title", help="Article topic or title.", hidden=hidden("topic")),
+        entity: str | None = typer.Option(
+            None, "--entity", "--entities", help="Entity to analyze or discover.", hidden=hidden("entity")
+        ),
+        keyword: str | None = typer.Option(
+            None, "--keyword", "--kw", help="Keyword text.", hidden=hidden("keyword")
+        ),
+        keywords: str | None = typer.Option(
+            None, "--keywords", help="Comma-separated keywords or path to a keyword file.", hidden=hidden("keywords")
+        ),
+        task_id: str | None = typer.Option(
+            None, "--task-id", help="Task ID from a prior create-task call.", hidden=not show_task_id
+        ),
+        url: str | None = typer.Option(None, "--url", help="Target URL/domain.", hidden=hidden("url")),
+        url_a: str | None = typer.Option(
+            None, "--url-a", "--url1", help="First URL for comparison or URL 1.", hidden=hidden("url_a")
+        ),
+        url_b: str | None = typer.Option(
+            None, "--url-b", "--url2", help="Second URL for comparison or URL 2.", hidden=hidden("url_b")
+        ),
+        brand: str | None = typer.Option(None, "--brand", help="Brand or company name.", hidden=hidden("brand")),
+        type_value: str | None = typer.Option(
+            None, "--type", help="Type/content type/image type by ID, slug, label, or alias.", hidden=hidden("type_value")
+        ),
+        length: str | None = typer.Option(
+            None, "--length", "--contentlength", help="Content length by ID, slug, label, or alias.", hidden=hidden("length")
+        ),
+        language: str | None = typer.Option(
+            None, "--language", help="Language by ID, slug, label, or alias.", hidden=hidden("language")
+        ),
+        engine: str | None = typer.Option(
+            None, "--engine", help="Engine/model by ID, slug, label, or alias.", hidden=hidden("engine")
+        ),
+        country: str | None = typer.Option(
+            None, "--country", help="Country/market code where supported.", hidden=hidden("country")
+        ),
+        location: str | None = typer.Option(
+            None, "--location", help="Location/market where supported.", hidden=hidden("location")
+        ),
+        text: str | None = typer.Option(
+            None, "--text", help="Text input for transformer-style tools.", hidden=hidden("text")
+        ),
+        file_path: str | None = typer.Option(None, "--file", help="Read text input from file.", hidden=hidden("text")),
+        stdin_flag: bool = typer.Option(False, "--stdin", help="Read text input from stdin.", hidden=hidden("text")),
+        search: str | None = typer.Option(
+            None, "--search", "--searchterm", help="Search term for marketplace/service-style tools.", hidden=hidden("search")
+        ),
+        query: str | None = typer.Option(
+            None, "--query", help="Query/search term where supported.", hidden=hidden("query")
+        ),
+        price: str | None = typer.Option(
+            None, "--price", help="Price ceiling or price filter where supported.", hidden=hidden("price")
+        ),
+        series: str | None = typer.Option(
+            None, "--series", help="Service series filter where supported.", hidden=hidden("series")
+        ),
+        category: str | None = typer.Option(
+            None, "--category", help="Service category filter where supported.", hidden=hidden("category")
+        ),
+        outline: str | None = typer.Option(
+            None, "--outline", help="Outline text or path to outline file.", hidden=hidden("outline")
+        ),
+        theme: str | None = typer.Option(
+            None, "--theme", help="Image theme by ID, slug, label, or alias.", hidden=hidden("theme")
+        ),
+        background: str | None = typer.Option(
+            None, "--background", help="Image background by ID, slug, label, or alias.", hidden=hidden("background")
+        ),
+        color: str | None = typer.Option(
+            None, "--color", help="Image color/palette by ID, slug, label, or alias.", hidden=hidden("color")
+        ),
+        size: str | None = typer.Option(
+            None, "--size", help="Image size by ID, slug, label, or alias.", hidden=hidden("size")
+        ),
         wait: bool = typer.Option(False, "--wait", help="Wait for async task completion."),
         timeout: int = typer.Option(600, "--timeout", help="Task wait timeout in seconds."),
         poll_interval: int = typer.Option(5, "--poll-interval", help="Task poll interval in seconds."),
@@ -717,11 +854,15 @@ def make_action_command(tool: str, action: str):
         params = build_params(
             keyword=keyword,
             keywords=keywords,
+            topic=topic,
+            entity=entity,
+            task_id=task_id,
             url=url,
             url_a=url_a,
             url_b=url_b,
             brand=brand,
             type_value=type_value,
+            length=length,
             language=language,
             engine=engine,
             country=country,
@@ -811,9 +952,11 @@ def make_tool_app(adapter: ToolAdapter) -> typer.Typer:
     for action in adapter.actions:
         if action == "raw":
             continue
-        tool_app.command(action, context_settings=COMMON_CONTEXT_SETTINGS)(make_action_command(adapter.canonical, action))
+        tool_app.command(action, context_settings=COMMON_CONTEXT_SETTINGS, rich_help_panel="Actions")(
+            make_action_command(adapter.canonical, action)
+        )
 
-    @tool_app.command("raw")
+    @tool_app.command("raw", rich_help_panel="Actions")
     def raw(
         ctx: typer.Context,
         json_payload: str | None = typer.Option(None, "--json", help="Raw JSON payload."),
@@ -839,7 +982,11 @@ def make_tool_app(adapter: ToolAdapter) -> typer.Typer:
             fail(exc)
 
     for command_name, fields in adapter.option_aliases.items():
-        tool_app.command(command_name)(make_option_alias_command(adapter.canonical, fields))
+        tool_app.command(
+            command_name,
+            rich_help_panel="Option lookups (list valid values for a parameter, not an action)",
+            help=f"List valid values for --{fields[0]}.",
+        )(make_option_alias_command(adapter.canonical, fields))
 
     return tool_app
 

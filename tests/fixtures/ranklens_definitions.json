@@ -1,0 +1,16 @@
+{
+  "api_input": [
+    {"field": "action", "type": "string", "required": "no", "description": ["rank: Generate RankLens report.", "competitors: Find RankLens competitors."]},
+    {"field": "web", "type": "string", "required": "yes", "description": "Website URL, max 300 characters."},
+    {"field": "entity", "type": "string", "required": "yes", "description": "Entity/keyword text, 4 to 80 characters."},
+    {"field": "kw", "type": "string", "required": "no", "description": "Deprecated alias of entity. Used only when entity is not sent."},
+    {"field": "keyword", "type": "string", "required": "no", "description": "Deprecated alias of entity. Used only when entity and kw are not sent."},
+    {"field": "brand", "type": "string", "required": "no", "description": "Brand text, 0 to 60 characters."},
+    {"field": "location", "type": "string", "required": "no", "description": "Location text, 0 to 100 characters."},
+    {"field": "lang", "type": "integer", "required": "no", "description": null},
+    {"field": "engine", "type": "integer", "required": "no", "description": null},
+    {"field": "mgptid", "type": "string", "required": "no", "description": "Encrypted MGPTID. Required for competitors action, not used for rank action."},
+    {"field": "k", "type": "string", "required": "yes", "description": "API key."}
+  ],
+  "api_output": []
+}

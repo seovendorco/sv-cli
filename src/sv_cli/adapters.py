@@ -31,11 +31,19 @@ class ToolAdapter:
 COMMON_FIELD_ALIASES: dict[str, tuple[str, ...]] = {
     "keyword": ("keyword", "kw", "query", "seed_keyword"),
     "keywords": ("keywords", "kws", "keyword_list", "kwlist"),
+    "topic": ("topic", "title"),
+    # Deliberately narrow: no "kw"/"keyword" fallback here, unlike "keyword" above.
+    # Those are common to many unrelated tools (better-keywords, seogpt2, ...) and
+    # would make --entity spuriously "relevant" (and functional, just semantically
+    # wrong) for all of them. RankLens overrides this below with its own aliases.
+    "entity": ("entity", "entities"),
+    "task_id": ("task_id", "taskid", "task-id"),
     "url": ("url", "domain", "page_url", "website"),
     "url_a": ("url_a", "urla", "url1", "first_url", "competitor_url"),
     "url_b": ("url_b", "urlb", "url2", "second_url", "comparison_url"),
     "brand": ("brand", "brand_name", "company", "company_name"),
     "type": ("contenttype", "content_type", "imagetype", "image_type", "type"),
+    "length": ("contentlength", "content_length", "length"),
     "language": ("language", "lang", "language_id"),
     "engine": ("engine", "ai_engine", "model"),
     "country": ("country", "country_code", "location", "gl"),
@@ -127,7 +135,14 @@ TOOL_ADAPTERS: dict[str, ToolAdapter] = {
         aliases=(),
         default_action="rank",
         actions=("rank", "competitors", "raw"),
-        field_aliases=COMMON_FIELD_ALIASES,
+        field_aliases={
+            **COMMON_FIELD_ALIASES,
+            # "entity" is RankLens's real, documented field. --keyword/--kw remain
+            # accepted as aliases (the API still honors kw/keyword input too), but
+            # should resolve onto entity now rather than the deprecated field names.
+            "keyword": ("entity", "kw", "keyword", "query", "seed_keyword"),
+            "entity": ("entity", "entities", "kw", "keyword", "query", "seed_keyword"),
+        },
         option_aliases={
             "languages": ("lang", "language", "languages"),
             "engines": ("engine", "model", "engines"),
@@ -176,8 +191,13 @@ TOOL_ADAPTERS: dict[str, ToolAdapter] = {
         actions=("create-task", "get-task-status", "get-result", "raw"),
         field_aliases={
             **COMMON_FIELD_ALIASES,
-            "keyword": ("Topic", "topic", "kw", "keyword", "query", "seed_keyword"),
-            "text": ("Topic", "topic", "text", "content", "input", "body"),
+            # The real backend (SEOB's seogpt2api.php) treats these as two distinct
+            # fields: Topic (required, 12-200 chars, the article subject) and KW
+            # (optional, up to 5 keywords). --keyword/--kw/--keywords must all land
+            # on KW, never on Topic - --topic/--title are the only way to set Topic.
+            "keyword": ("KW", "kw", "keywords", "keyword", "query", "seed_keyword"),
+            "keywords": ("KW", "kw", "keywords", "keyword", "keyword_list", "kwlist"),
+            "topic": ("Topic", "topic", "title"),
         },
         async_likely=True,
         option_aliases={
