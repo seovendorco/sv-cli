@@ -87,7 +87,7 @@ seogpt:               generate, raw
 seogpt2:              create-task, get-task-status, get-result, raw
 seogpt-compare:       create-task, get-task-status, get-result, raw
 seo-mapping:          create-task, get-task-status, get-result, raw
-topical-authority:    topics, content, raw
+topical-authority:    topics, raw
 top-competitors:      analyze, raw
 marketplace-services: search, raw
 content-quality:      analyze, raw
