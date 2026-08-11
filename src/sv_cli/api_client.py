@@ -24,9 +24,13 @@ class APIResponse:
 
 
 class APIClient:
-    def __init__(self, *, debug: bool = False, console: Console | None = None) -> None:
+    def __init__(self, *, debug: bool = False, console: Console | None = None, client_type: str | None = None) -> None:
         self.debug = debug
         self.console = console or Console(stderr=True)
+        # Identifies this process to the SV API as "cli" or "mcp" (X-SV-Client header)
+        # for usage tracking. None means the caller didn't specify one - the header is
+        # simply omitted, and the API buckets the call as generic "api" usage.
+        self.client_type = client_type
 
     def request_tool(
         self,
@@ -42,6 +46,7 @@ class APIClient:
             final_payload["k"] = api_key
 
         method = method.upper()
+        headers = {"X-SV-Client": self.client_type} if self.client_type else None
         if self.debug:
             parsed = urlparse(endpoint)
             shown_path = parsed.path or endpoint
@@ -50,7 +55,7 @@ class APIClient:
 
         started = time.perf_counter()
         try:
-            with httpx.Client(timeout=timeout, follow_redirects=True) as client:
+            with httpx.Client(timeout=timeout, follow_redirects=True, headers=headers) as client:
                 if method == "GET":
                     response = client.get(endpoint, params=final_payload)
                 elif method in {"POST", "PUT", "PATCH"}:

@@ -228,6 +228,7 @@ def run_tool_action(
             wait_options=wait_options,
             method=method,
             console=console,
+            client_type="cli",
         )
     except Exception as exc:  # noqa: BLE001
         fail(exc)
@@ -597,7 +598,16 @@ def raw_call(
         runtime = runtime_from_ctx(ctx)
         # Raw calls intentionally bypass fuzzy matching. Users can pass exact API payloads.
         runtime.no_fuzzy = True
-        execute_tool(tool_name=tool, action=None, params={}, runtime=runtime, raw_payload=payload, method=method, console=console)
+        execute_tool(
+            tool_name=tool,
+            action=None,
+            params={},
+            runtime=runtime,
+            raw_payload=payload,
+            method=method,
+            console=console,
+            client_type="cli",
+        )
     except Exception as exc:  # noqa: BLE001
         fail(exc)
 
@@ -617,7 +627,7 @@ def task_call(ctx: typer.Context, task_id: str, action: str, tool: str | None) -
         non_interactive=runtime.non_interactive,
     )
     payload = status_payload(task_id) if action == "status" else result_payload(task_id)
-    data = APIClient(debug=runtime.debug, console=err_console).request_tool(
+    data = APIClient(debug=runtime.debug, console=err_console, client_type="cli").request_tool(
         endpoint=str(entry.get("endpoint")), payload=payload, api_key=api_key
     ).data
     print_output(console, data, runtime.output_format, runtime.output)
@@ -945,6 +955,7 @@ def make_tool_app(adapter: ToolAdapter) -> typer.Typer:
                 runtime=runtime,
                 wait_options=wait_options,
                 console=console,
+                client_type="cli",
             )
         except Exception as exc:  # noqa: BLE001
             fail(exc)
@@ -977,6 +988,7 @@ def make_tool_app(adapter: ToolAdapter) -> typer.Typer:
                 raw_payload=payload,
                 method=method,
                 console=console,
+                client_type="cli",
             )
         except Exception as exc:  # noqa: BLE001
             fail(exc)

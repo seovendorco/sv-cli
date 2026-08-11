@@ -120,6 +120,7 @@ def execute_tool(
     raw_payload: dict[str, Any] | None = None,
     method: str = "POST",
     console: Console | None = None,
+    client_type: str | None = None,
 ) -> Any:
     console = console or Console()
     definitions = DefinitionsManager(runtime.base_url)
@@ -149,7 +150,7 @@ def execute_tool(
             non_interactive=runtime.non_interactive,
         )
 
-    client = APIClient(debug=runtime.debug, console=Console(stderr=True))
+    client = APIClient(debug=runtime.debug, console=Console(stderr=True), client_type=client_type)
     response = client.request_tool(endpoint=str(endpoint), payload=payload, api_key=api_key, method=method)
     data = response.data
 
