@@ -242,7 +242,7 @@ TOOL_ADAPTERS: dict[str, ToolAdapter] = {
         command="topical-authority",
         aliases=("topical",),
         default_action="topics",
-        actions=("topics", "content", "raw"),
+        actions=("topics", "raw"),
         field_aliases=COMMON_FIELD_ALIASES,
         option_aliases={
             "modes": ("topicmode", "topic_mode", "mode", "modes"),
