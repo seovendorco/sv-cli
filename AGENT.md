@@ -64,7 +64,7 @@ All 16 available tools. Use exact command names — aliases are human shortcuts.
 | `ranklens` | — | `rank` | `--entity` `--url` | No |
 | `seo-image` | `image` | `generate` | `--keyword` | No |
 | `seogpt` | `seo-gpt` | `generate` | `--keyword` `--type` | No |
-| `seogpt2` | `seo-gpt2` | `create-task` | `--topic` *(`--keyword`/`--kw` is a separate, optional field)* | Yes |
+| `prose` | `seogpt2`, `seo-gpt2` | `create-task` | `--topic` *(`--keyword`/`--kw` is a separate, optional field)* | Yes |
 | `seogpt-compare` | `compare` | `create-task` | `--url` `--keyword` | Yes |
 | `seo-mapping` | `mapping` | `create-task` | `--url` `--keyword` | Yes |
 | `topical-authority` | `topical` | `topics` | `--keyword` | No |
@@ -84,7 +84,7 @@ preliminary-audit:    analyze, raw
 ranklens:             rank, competitors, raw
 seo-image:            generate, raw
 seogpt:               generate, raw
-seogpt2:              create-task, get-task-status, get-result, raw
+prose:                create-task, get-task-status, get-result, raw
 seogpt-compare:       create-task, get-task-status, get-result, raw
 seo-mapping:          create-task, get-task-status, get-result, raw
 topical-authority:    topics, raw
@@ -118,11 +118,11 @@ sv seogpt engines
 sv image types
 sv image themes
 sv image themes --search wild
-sv seogpt2 types
-sv seogpt2 lengths
-sv seogpt2 languages
-sv seogpt2 tones
-sv seogpt2 engines
+sv prose types
+sv prose lengths
+sv prose languages
+sv prose tones
+sv prose engines
 sv geo-audit types
 sv geo-audit languages
 sv seo-mapping types
@@ -190,7 +190,7 @@ Parse: `response["data"]["text"]`
 ```
 Parse: `response["data"]` — array of objects
 
-**Async task created** (`geo-audit create-task`, `seogpt2 create-task`, `seogpt-compare create-task`, `seo-mapping create-task`):
+**Async task created** (`geo-audit create-task`, `prose create-task`, `seogpt-compare create-task`, `seo-mapping create-task`):
 ```json
 { "data": { "task_id": "wFEGe...", "status": "pending", "stage": "queued", "percent_complete": 1 } }
 ```
@@ -247,7 +247,7 @@ sv geo-audit get-task-status --task-id TASK_ID --format json
 sv geo-audit get-result --task-id TASK_ID --format json
 ```
 
-Same for `seogpt2`, `seogpt-compare`, `seo-mapping` — replace `geo-audit` with the tool name.
+Same for `prose`, `seogpt-compare`, `seo-mapping` — replace `geo-audit` with the tool name.
 
 ---
 
@@ -255,17 +255,17 @@ Same for `seogpt2`, `seogpt-compare`, `seo-mapping` — replace `geo-audit` with
 
 These differ from the standard pattern — get them wrong and the call fails.
 
-### seogpt2 — `--topic` maps to `Topic` (required), `--keyword`/`--kw` is a separate field
+### prose — `--topic` maps to `Topic` (required), `--keyword`/`--kw` is a separate field
 
 ```bash
 # CORRECT — --topic sends value as the required "Topic" API field
-sv seogpt2 create-task --topic "White Label SEO for Agencies" --type on-page-blog-article --wait --strict --no-fuzzy --non-interactive --format json
+sv prose create-task --topic "White Label SEO for Agencies" --type on-page-blog-article --wait --strict --no-fuzzy --non-interactive --format json
 
 # --title is an alias for --topic (same field)
-sv seogpt2 create-task --title "White Label SEO for Agencies" --type on-page-blog-article --wait --strict --no-fuzzy --non-interactive --format json
+sv prose create-task --title "White Label SEO for Agencies" --type on-page-blog-article --wait --strict --no-fuzzy --non-interactive --format json
 
 # --keyword/--kw maps to the separate, optional KW field — it does NOT set Topic
-sv seogpt2 create-task --topic "White Label SEO for Agencies" --keyword "white label seo" --type on-page-blog-article --wait --strict --no-fuzzy --non-interactive --format json
+sv prose create-task --topic "White Label SEO for Agencies" --keyword "white label seo" --type on-page-blog-article --wait --strict --no-fuzzy --non-interactive --format json
 ```
 
 ### better-keywords `filter` — requires `data` array from prior `research` call
@@ -319,7 +319,7 @@ sv task status TASK_ID --tool geo-audit --format json
 |---|---|---|
 | `Could not resolve --type "X" in strict mode` | Value is not a valid slug or ID | Run `sv options TOOL type` → use `id` or `slug` column |
 | `Could not resolve --type "X"` (no strict) | No match found at any level | Run `sv options TOOL type --search X` to find closest match |
-| `Topic is required` | seogpt2 called without `--topic` | Add `--topic "your topic"` |
+| `Topic is required` | prose called without `--topic` | Add `--topic "your topic"` |
 | `task_id is invalid` | Task has expired on the server | Create a new task |
 | `No local tool mapping found for task` | Task not in `~/.sv/tasks.json` | Add `--tool TOOL_NAME` explicitly |
 | `API authentication failed: HTTP 401` | Bad or missing API key | Check `SV_API_KEY` environment variable |
@@ -381,7 +381,7 @@ sv preliminary-audit analyze --url https://example.com --strict --no-fuzzy --non
 sv ranklens rank --entity "white label seo" --url https://example.com --strict --no-fuzzy --non-interactive --format json
 sv seo-image generate --keyword "white label seo" --type 33 --strict --no-fuzzy --non-interactive --format json
 sv seogpt generate --keyword "white label seo" --type 18 --strict --no-fuzzy --non-interactive --format json
-sv seogpt2 create-task --topic "White Label SEO for Agencies" --type 0 --wait --strict --no-fuzzy --non-interactive --format json
+sv prose create-task --topic "White Label SEO for Agencies" --type 0 --wait --strict --no-fuzzy --non-interactive --format json
 sv seogpt-compare create-task --url https://example.com --keyword "white label seo" --wait --strict --no-fuzzy --non-interactive --format json
 sv seo-mapping create-task --url https://example.com --keyword "white label seo" --wait --strict --no-fuzzy --non-interactive --format json
 sv topical-authority topics --keyword "white label seo" --strict --no-fuzzy --non-interactive --format json
@@ -394,4 +394,4 @@ Common enum IDs (verify with `sv options` — these are from live API at time of
 - `seogpt --type 18` = Meta Description
 - `seogpt --type 8` = Page Title
 - `seo-image --type 33` = Blog Header Image
-- `seogpt2 --type 0` = On-Page Blog Article
+- `prose --type 0` = On-Page Blog Article

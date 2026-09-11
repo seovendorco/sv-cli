@@ -128,7 +128,7 @@ sv title --keyword "white label seo" --url https://example.com
 | `ranklens` | | `ranklens` |
 | `seo-image` | `image` | `seo-image` |
 | `seogpt` | `seo-gpt` | `seogpt` |
-| `seogpt2` | `seo-gpt2` | `seogpt2` |
+| `prose` | `seogpt2`, `seo-gpt2` | `seogpt2` |
 | `seogpt-compare` | `compare` | `seogptcompare` |
 | `seo-mapping` | `mapping` | `seogptmapping` |
 | `topical-authority` | `topical` | `topical-authority` |
@@ -217,13 +217,13 @@ sv task status TASK_ID --tool geo-audit
 sv task result TASK_ID --tool geo-audit
 ```
 
-`seogpt2` is another async tool. Its required field is `Topic` (a title or subject), mapped via `--topic` (`--title` is an alias for the same field). `--keyword`/`--kw` is a separate, optional field for additional keywords — it does not set the topic:
+`prose` (formerly `seogpt2`) is another async tool. Its required field is `Topic` (a title or subject), mapped via `--topic` (`--title` is an alias for the same field). `--keyword`/`--kw` is a separate, optional field for additional keywords — it does not set the topic:
 
 ```bash
-sv seogpt2 create-task --topic "White Label SEO for Agencies" --type on-page-blog-article --wait
+sv prose create-task --topic "White Label SEO for Agencies" --type on-page-blog-article --wait
 ```
 
-See available types with `sv seogpt2 types`, lengths with `sv seogpt2 lengths`, engines with `sv seogpt2 engines`.
+See available types with `sv prose types`, lengths with `sv prose lengths`, engines with `sv prose engines`.
 
 Manual 3-step flow (without `--wait`):
 

@@ -24,7 +24,7 @@ sv preliminary-audit run --url https://example.com
 sv ranklens analyze --brand "SV" --keyword "white label seo"
 sv seo-image generate --keyword "white label seo" --type blog-header
 sv seogpt generate --type meta-description --keyword "white label seo"
-sv seogpt2 article --keyword "white label seo" --wait
+sv prose article --keyword "white label seo" --wait
 sv seogpt-compare run --url https://example.com --keyword "white label seo"
 sv seo-mapping run --url https://example.com --keywords "seo agency" --wait
 sv topical-authority generate --keyword "local seo"
