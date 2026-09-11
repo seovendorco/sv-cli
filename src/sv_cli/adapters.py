@@ -184,9 +184,15 @@ TOOL_ADAPTERS: dict[str, ToolAdapter] = {
         },
     ),
     "seogpt2": ToolAdapter(
+        # "Prose" is the current product name; seogpt2 is the original one, kept
+        # working as an alias so existing scripts don't break. canonical stays
+        # "seogpt2" deliberately - it's what the live API root still keys this
+        # tool under, and keeping it means the CLI works whether or not the
+        # /api/prose/ alias folder is deployed yet. Flip it to "prose" only when
+        # /api/seogpt2/ is actually retired.
         canonical="seogpt2",
-        command="seogpt2",
-        aliases=("seo-gpt2",),
+        command="prose",
+        aliases=("seogpt2", "seo-gpt2"),
         default_action="create-task",
         actions=("create-task", "get-task-status", "get-result", "raw"),
         field_aliases={

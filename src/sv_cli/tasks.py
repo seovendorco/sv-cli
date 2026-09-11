@@ -50,7 +50,7 @@ def get_task_tool(task_id: str, tool: str | None = None) -> str:
         return str(entry["tool"])
     raise ConfigError(
         f'No local tool mapping found for task "{task_id}". Re-run with --tool, for example: '
-        f"sv task status {task_id} --tool seogpt2"
+        f"sv task status {task_id} --tool prose"
     )
 
 

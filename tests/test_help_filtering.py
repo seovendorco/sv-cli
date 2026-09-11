@@ -78,3 +78,15 @@ def test_tool_help_separates_actions_from_option_lookups(tmp_path):
     actions_section = output.split("Option lookups")[0]
     assert "create-task" in actions_section
     assert "languages" not in actions_section
+
+
+def test_prose_is_the_primary_name_and_seogpt2_still_works(tmp_path):
+    """Prose is the current product name; the old names stay as aliases.
+
+    All three must resolve to the same tool - dropping seogpt2/seo-gpt2 would
+    break any existing script that hardcodes them.
+    """
+    for name in ("prose", "seogpt2", "seo-gpt2"):
+        output = _run_cli(tmp_path, name, "create-task", "--help")
+        assert "--topic" in output, f"{name} did not resolve to the Prose tool"
+        assert "--keyword" in output
