@@ -14,6 +14,19 @@ from rich.console import Console
 from .errors import APIError, NetworkError, TimeoutError
 from .utils import mask_mapping
 
+RATE_LIMIT_RETRIES = 3
+# Just over the API's one-call-per-second window, so a retry lands in the next window.
+RATE_LIMIT_DEFAULT_WAIT = 1.1
+
+
+def _retry_after_seconds(response: httpx.Response) -> float:
+    """Seconds to wait before retrying a 429, from its Retry-After header if usable."""
+    try:
+        seconds = float(response.headers.get("Retry-After", ""))
+    except ValueError:
+        return RATE_LIMIT_DEFAULT_WAIT
+    return min(max(seconds, 0.0) + 0.1, 10.0)
+
 
 @dataclass
 class APIResponse:
@@ -54,18 +67,32 @@ class APIClient:
             self.console.print_json(json.dumps(mask_mapping(final_payload)))
 
         started = time.perf_counter()
-        try:
-            with httpx.Client(timeout=timeout, follow_redirects=True, headers=headers) as client:
-                if method == "GET":
-                    response = client.get(endpoint, params=final_payload)
-                elif method in {"POST", "PUT", "PATCH"}:
-                    response = client.request(method, endpoint, json=final_payload)
-                else:
-                    raise APIError(f"Unsupported HTTP method: {method}")
-        except httpx.TimeoutException as exc:
-            raise TimeoutError(f"Request timed out after {timeout:g} seconds.") from exc
-        except httpx.RequestError as exc:
-            raise NetworkError(f"Network error while calling SV API: {exc}") from exc
+        for attempt in range(RATE_LIMIT_RETRIES + 1):
+            try:
+                with httpx.Client(timeout=timeout, follow_redirects=True, headers=headers) as client:
+                    if method == "GET":
+                        response = client.get(endpoint, params=final_payload)
+                    elif method in {"POST", "PUT", "PATCH"}:
+                        response = client.request(method, endpoint, json=final_payload)
+                    else:
+                        raise APIError(f"Unsupported HTTP method: {method}")
+            except httpx.TimeoutException as exc:
+                raise TimeoutError(f"Request timed out after {timeout:g} seconds.") from exc
+            except httpx.RequestError as exc:
+                raise NetworkError(f"Network error while calling SV API: {exc}") from exc
+
+            # The SV API allows one call per second per API key and rejects anything faster
+            # with 429 *before* doing any work - nothing is charged and no task is created -
+            # so retrying is always safe, including for task creation. This keeps --wait
+            # polling (which checks status right after creating a task, and fetches the
+            # result right after a "done" status) and parallel tool calls from MCP clients
+            # working under the limit.
+            if response.status_code != 429 or attempt == RATE_LIMIT_RETRIES:
+                break
+            wait = _retry_after_seconds(response)
+            if self.debug:
+                self.console.print(f"[dim]Rate limited; retrying in {wait:.1f}s[/dim]")
+            time.sleep(wait)
 
         elapsed = time.perf_counter() - started
         if self.debug:
@@ -77,11 +104,23 @@ class APIClient:
             data = response.text
 
         if response.status_code in {401, 403}:
-            raise APIError(f"API authentication failed: HTTP {response.status_code}. Check your API key.")
+            raise APIError(
+                f"API authentication failed: HTTP {response.status_code}. Check your API key.",
+                status_code=response.status_code,
+                data=data,
+            )
         if response.status_code == 429:
-            raise APIError("API rate limit exceeded. Retry later or increase --poll-interval for async tasks.")
+            raise APIError(
+                "API rate limit exceeded. Retry later or increase --poll-interval for async tasks.",
+                status_code=response.status_code,
+                data=data,
+            )
         if response.status_code >= 400:
             message = data if isinstance(data, str) else json.dumps(mask_mapping(data), ensure_ascii=False)
-            raise APIError(f"API request failed: HTTP {response.status_code}. {message}")
+            raise APIError(
+                f"API request failed: HTTP {response.status_code}. {message}",
+                status_code=response.status_code,
+                data=data,
+            )
 
         return APIResponse(data=data, status_code=response.status_code, elapsed_seconds=elapsed, url=endpoint)

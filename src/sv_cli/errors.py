@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass
@@ -31,8 +32,13 @@ class AuthError(CLIError):
 
 
 class APIError(CLIError):
-    def __init__(self, message: str) -> None:
+    def __init__(self, message: str, *, status_code: int | None = None, data: Any = None) -> None:
         super().__init__(message, 4)
+        # Structured detail for callers that present errors themselves (sv-mcp turns
+        # the API's own error message into a readable tool error). The message is
+        # unchanged, so CLI output is unaffected.
+        self.status_code = status_code
+        self.data = data
 
 
 class NetworkError(CLIError):
