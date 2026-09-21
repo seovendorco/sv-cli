@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.0
+
+- Automatically retries a request up to 3 times when the SV API returns HTTP 429 (rate limit of 1 request per second per API key), waiting as long as the `Retry-After` header asks. `--wait` polling keeps working under the limit.
+- `APIError` now carries the HTTP `status_code` and the parsed response `data`, so callers such as SV MCP can show the API's own error message. CLI output is unchanged.
+- README: corrected the clone URL; added "MCP server (SV MCP)" and "Privacy" sections.
+
 ## 0.3.0
 
 - Renamed the distribution package from `seovendor-cli` to `sv-cli`.

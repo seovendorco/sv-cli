@@ -23,13 +23,39 @@ pip install sv-cli
 For local development:
 
 ```bash
-git clone https://github.com/seovendor/sv-cli.git
+git clone https://github.com/seovendorco/sv-cli.git
 cd sv-cli
 python -m venv .venv
 source .venv/bin/activate
 pip install -e '.[dev]'
 sv --help
 ```
+
+## MCP server (SV MCP)
+
+SV MCP is the hosted [Model Context Protocol](https://modelcontextprotocol.io) server for the SV API, built on the same core library as this CLI. It gives Claude, Cursor, VS Code, Windsurf and other MCP clients the SV tools, with sign-in handled by OAuth.
+
+- **Server URL:** `https://mcp.seovendor.co`
+- **Transport:** Streamable HTTP
+- **Auth:** OAuth 2.1 — your API key stays on the server
+- **Repository:** https://github.com/seovendorco/sv-mcp
+- **Docs:** https://seovendor.co/api/mcp
+
+**Claude.ai and Claude Desktop:** Customize → Connectors → + → Add custom connector → paste `https://mcp.seovendor.co` → Connect and sign in to SV.
+
+**Claude Code:**
+
+```bash
+claude mcp add --transport http sv-mcp https://mcp.seovendor.co
+```
+
+**Cursor** (`~/.cursor/mcp.json`):
+
+```json
+{ "mcpServers": { "sv-mcp": { "url": "https://mcp.seovendor.co" } } }
+```
+
+Setup for VS Code, Windsurf and stdio-only clients, plus the full tool list, is in the [SV MCP README](https://github.com/seovendorco/sv-mcp#connect). SV MCP exposes the CLI's tools except `seo-image`, plus `get_task_status` and `get_task_result` for async tasks.
 
 ## API key setup
 
@@ -303,6 +329,12 @@ Live tests should be opt-in only:
 ```bash
 SV_API_KEY=... RUN_LIVE_TESTS=1 pytest -m live
 ```
+
+## Privacy
+
+SV CLI runs on your computer and sends requests only to the SV API. It stores your API key in `~/.sv/config.json`, recent task IDs in `~/.sv/tasks.json`, and cached tool definitions in `~/.sv/cache/` (or under `SV_HOME` if set). There is no separate telemetry; requests carry an `X-SV-Client` header so the SV API can tell CLI usage apart from other clients.
+
+See the SV privacy policy: https://seovendor.co/privacy-policy/
 
 ## Security
 
