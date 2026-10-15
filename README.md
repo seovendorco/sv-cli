@@ -15,7 +15,7 @@ Run GEO audits and generate SEO content from your terminal, your scripts, or you
 Built for agents: strict enum IDs, `--non-interactive`, and `--format json` on every command.
 Friendly for humans: slugs, aliases and fuzzy matching, so `--type "meta desc"` just works.
 Async-aware: long jobs return a task ID, or use `--wait` to block until the result is ready.
-> The CLI is MIT-licensed. The API behind it is the SV platform and requires a key. See [Get an API key](#get-an-api-key).
+> The CLI is MIT-licensed. The API behind it is the SV platform and requires a key. [Get a free API key](https://access.seovendor.co/signup).
 See it work
 1. Audit a URL for AI-search (GEO) visibility
 ```bash
@@ -59,7 +59,7 @@ sv --help
 ```
 Requires Python 3.10+.
 Get an API key
-Sign up at https://access.seovendor.co/signup for a free key. The free plan includes 20 tool runs per month and 300 welcome points to try Prose, no card needed. Paid plans add more points and tools; see the pricing page after you sign in.
+Sign up for a free API key. The free plan includes 20 tool runs per month and 300 welcome points to try Prose, no card needed. Paid plans add more points and tools; see the pricing page after you sign in.
 Then:
 ```bash
 sv auth set        # stores the key in ~/.sv/config.json
@@ -67,6 +67,7 @@ sv auth status
 ```
 For CI or agents, set `SV_API_KEY` instead. Full resolution order is in API key setup.
 ---
+(Everything below this line stays as it is today, except: move "Brand migration notes" to CHANGELOG.md under the rename release, and keep only a one-line "Upgrading from `seovendor`?" pointer in the README. Delete this note and the `---` line before pasting.)
 
 ## MCP server (SV MCP)
 
