@@ -8,28 +8,65 @@
 
 Agentic SEO & GEO from the command line
 ```
-# SV CLI
-
-SV CLI is an open-source command-line client for agentic SEO and GEO workflows using the SV API (SEO VENDOR API). It is designed as a definition-driven resolver layer: humans can use friendly commands, slugs, aliases, and presets, while scripts and AI agents can use strict enum IDs and raw JSON calls.
-
-The CLI discovers available tools from the API root and fetches each tool's definitions endpoint at runtime. Definitions are cached locally for speed, refreshed automatically after 24 hours by default, and can be refreshed or cleared manually.
-
-## Install
-
+SV CLI
+![PyPI](https://img.shields.io/pypi/v/sv-cli)
+![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)
+Run GEO audits and generate SEO content from your terminal, your scripts, or your AI agent. SV CLI is an open-source (MIT) client for the SV API, built for Claude Code, Cursor, Hermes Agent, OpenClaw and any other agent that can run a shell command. All 16 SV API tools are available as commands.
+Built for agents: strict enum IDs, `--non-interactive`, and `--format json` on every command.
+Friendly for humans: slugs, aliases and fuzzy matching, so `--type "meta desc"` just works.
+Async-aware: long jobs return a task ID, or use `--wait` to block until the result is ready.
+> The CLI is MIT-licensed. The API behind it is the SV platform and requires a key. See [Get an API key](#get-an-api-key).
+See it work
+1. Audit a URL for AI-search (GEO) visibility
+```bash
+sv geo-audit create-task \
+  --url https://example.com \
+  --keyword "seo agency,white label seo" \
+  --wait --format json --output audit.json
+```
+The audit runs asynchronously, and `--wait` polls until it's done. You get a structured report, not a single score, organized into modules (A through K) that include:
+Pages and entities: per-page upgrades, entity mappings, schema remediation
+Citations and competitors: citation targets and competitor patterns
+Action plan: quick wins, a roadmap, a citation plan and a retest plan
+Reputation: recommendation readiness, review sentiment themes, reputation actions
+Pull a section straight into a script or an agent:
+```bash
+jq '.data.result.modules.F.quick_wins' audit.json
+```
+2. Generate a long-form article
+```bash
+sv prose create-task \
+  --topic "White Label SEO for Agencies" \
+  --type 0 \
+  --wait --format json --output article.json
+```
+Prose returns the article as HTML (`article_html`), the settings it used (content type, length, language, tone, engine, pathway), and four quality scores from 0 to 100: visit-website intent, keyword alignment, brand alignment and notes alignment. Extract the article:
+```bash
+jq -r '.data.article_html' article.json > article.html
+```
+`--type 0` is On-Page Blog Article. Run `sv prose types` for the rest, and `sv prose engines` and `sv prose lengths` for engine and length options.
+3. Let your agent do it. Add the hosted MCP server, then ask in plain English:
+```bash
+claude mcp add --transport http sv-mcp https://mcp.seovendor.co
+```
+> "Run a GEO audit on example.com for 'white label seo', then write a blog article on the biggest gap it finds."
+Other clients (Claude.ai, Claude Desktop, Cursor, VS Code, Windsurf) are covered in the MCP section.
+Checking a task's status or result is free. The API allows 1 request per second per key, and the CLI retries automatically.
+Install
 ```bash
 pip install sv-cli
-```
-
-For local development:
-
-```bash
-git clone https://github.com/seovendorco/sv-cli.git
-cd sv-cli
-python -m venv .venv
-source .venv/bin/activate
-pip install -e '.[dev]'
 sv --help
 ```
+Requires Python 3.10+.
+Get an API key
+Sign up at https://access.seovendor.co/signup for a free key. The free plan includes 20 tool runs per month and 300 welcome points to try Prose, no card needed. Paid plans add more points and tools; see the pricing page after you sign in.
+Then:
+```bash
+sv auth set        # stores the key in ~/.sv/config.json
+sv auth status
+```
+For CI or agents, set `SV_API_KEY` instead. Full resolution order is in API key setup.
+---
 
 ## MCP server (SV MCP)
 
